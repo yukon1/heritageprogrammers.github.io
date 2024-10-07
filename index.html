@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Space Background</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+        h1 {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 3em;
+            margin: 0;
+            color: #39ff14; /* Neon Green */
+            text-shadow: 0 0 15px #39ff14, 0 0 30px #39ff14;
+            letter-spacing: 2px;
+            transform: perspective(400px) rotateX(20deg); /* 3D Header Effect */
+            animation: zoom 3s infinite alternate; /* Animation for zoom effect */
+        }
+
+        #dynamic-content {
+            transition: visibility 0s, opacity 0.5s linear;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .fade-in {
+            opacity: 1;
+            visibility: visible;
+        }
+       
+    
+
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            overflow: hidden; /* Hide overflow */
+            position: relative; /* Position relative for absolute children */
+        }
+
+        .spaceship {
+            position: absolute;
+            width: 100px; /* Initial size */
+            cursor: pointer; /* Change cursor to pointer on hover */
+            transition: transform 2s ease, opacity 2s ease; /* Smooth animation */
+        }
+
+        .zoom {
+            transform: scale(5) translate(-50%, -50%); /* Zoom effect */
+            opacity: 0; /* Fade out */
+        }
+
+
+
+        .star-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none; /* Prevent mouse events on canvas */
+        }
+
+        /* Spacecraft styles */
+        .spacecraft {
+            position: absolute;
+            width: 180px; /* Increased the size of the spacecraft */
+            pointer-events: auto; /* Allow mouse events on spacecraft */
+            transition: transform 0.2s, box-shadow 0.2s, opacity 1s; /* Smooth transition for hover effect */
+        }
+
+        /* Glow effect on hover */
+        .spacecraft:hover {
+            transform: scale(1.1) perspective(400px) rotateY(10deg); /* Slight scaling and 3D rotation on hover */
+            
+        }
+    </style>
+</head>
+<body>
+
+    
+    <h1>Cosmic Code Journey</h1>
+    <canvas class="star-canvas"></canvas>
+    <img src="Images/Spacecraft.png" class="spacecraft" id="spacecraft" alt="Spacecraft" />
+
+    <script>
+        const canvas = document.querySelector('.star-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Create stars with random colors
+        const stars = [];
+        function createStars() {
+            for (let i = 0; i < 75; i++) { // Reduced quantity to 75
+                const size = Math.random() * 2 + 1; // Random size between 1 and 3
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const colorClass = Math.floor(Math.random() * 4);
+                const color = colorClass === 0 ? 'white' : colorClass === 1 ? 'pink' : colorClass === 2 ? 'red' : 'yellow'; // Random color
+                const star = {
+                    x,
+                    y,
+                    size,
+                    color,
+                    speed: Math.random() * 1.5 + 1.5, // Increased speed for faster zoom
+                    z: Math.random() * canvas.width // Z-axis for 3D effect
+                };
+                stars.push(star);
+            }
+        }
+        createStars();
+
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(star => {
+                const perspective = canvas.width / (canvas.width / 2 + star.z);
+                const sx = star.x * perspective + canvas.width / 2;
+                const sy = star.y * perspective + canvas.height / 2;
+
+                const size = star.size * perspective; // Adjust size for perspective
+                ctx.beginPath();
+                ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                ctx.fillStyle = star.color;
+                ctx.shadowColor = star.color; // Glow effect
+                ctx.shadowBlur = 10; // Glow radius
+                ctx.fill();
+                star.y += star.speed; // Move stars downward
+                star.z -= 8; // Increased speed towards the viewer for 3D effect
+                if (star.y > canvas.height) {
+                    star.y = 0; // Reset star position
+                    star.x = Math.random() * canvas.width; // Randomize x position
+                    star.z = canvas.width; // Reset z for 3D effect
+                }
+            });
+            requestAnimationFrame(drawStars);
+        }
+        drawStars();
+
+        // Mouse effect with glow and bounce
+        document.addEventListener('mousemove', (e) => {
+            const colors = ['white', 'pink', 'red', 'yellow'];
+            for (let i = 0; i < 5; i++) { // Reduced number of stars spouting to 5
+                createSpoutingStar(e.clientX, e.clientY);
+            }
+        });
+
+        function createSpoutingStar(x, y) {
+            const size = Math.random() * 5 + 2; // Random size between 2 and 7
+            const color = 'rgba(255, 255, 255, 0.8)'; // Color for glowing effect
+            const star = {
+                x,
+                y,
+                size,
+                color,
+                speedY: Math.random() * -3 - 1, // Initial upward speed
+                fallSpeed: Math.random() * 0.5 + 0.5, // Speed of falling down
+                bounceHeight: Math.random() * 20 + 20, // Height of bounce
+                fade: 1 // Fade effect
+            };
+
+            // Animation for each spouting star
+            function animate() {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fillStyle = star.color;
+                ctx.fill();
+
+                // Update star position
+                star.y += star.speedY; // Move up initially
+                star.speedY += star.fallSpeed; // Apply fall speed
+
+                // Bounce effect
+                if (star.speedY > 0 && star.y >= canvas.height - star.bounceHeight) {
+                    star.speedY *= -0.5; // Reverse speed for bounce
+                }
+
+                // Fade effect
+                if (star.fade > 0) {
+                    star.fade -= 0.01; // Gradual fade
+                    star.color = `rgba(255, 255, 255, ${star.fade})`; // Update color with fade
+                }
+
+                // Stop animation if fully faded
+                if (star.fade > 0) {
+                    requestAnimationFrame(animate);
+                }
+            }
+
+            animate();
+        }
+
+        // 3D Star Animation Effect
+        function add3DStars() {
+            const starField = [];
+            for (let i = 0; i < 200; i++) { // Increased number of stars for more effect
+                const z = Math.random() * canvas.width;
+                const x = Math.random() * canvas.width - canvas.width / 2;
+                const y = Math.random() * canvas.height - canvas.height / 2;
+                const colorClass = Math.floor(Math.random() * 4);
+                const color = colorClass === 0 ? 'white' : colorClass === 1 ? 'pink' : colorClass === 2 ? 'red' : 'yellow'; // Random color for 3D stars
+                starField.push({ x, y, z, color });
+            }
+
+            function draw3DStars() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                starField.forEach(star => {
+                    const perspective = canvas.width / (canvas.width / 2 + star.z);
+                    const sx = star.x * perspective + canvas.width / 2;
+                    const sy = star.y * perspective + canvas.height / 2;
+
+                    const size = 2 * perspective;
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                    ctx.fillStyle = star.color; // Use the star color
+                    ctx.shadowColor = star.color; // Glow effect for 3D stars
+                    ctx.shadowBlur = 10; // Glow radius
+                    ctx.fill();
+
+                    star.z -= 5; // Move the star towards the viewer
+                    if (star.z <= 0) {
+                        star.z = canvas.width; // Reset the star to the back
+                        star.x = Math.random() * canvas.width - canvas.width / 2;
+                        star.y = Math.random() * canvas.height - canvas.height / 2;
+                    }
+                });
+
+                requestAnimationFrame(draw3DStars);
+            }
+
+            draw3DStars();
+        }
+        add3DStars();
+
+        // Spacecraft Movement
+        const spacecraft = document.getElementById('spacecraft');
+        let spacecraftX = canvas.width - 100; // Starting position on the right
+        let spacecraftY = canvas.height / 2; // Center vertically
+        let spacecraftSpeedY = 1; // Slower speed for zero gravity
+        let spacecraftDirection = 0; // Initial direction for left-right movement
+        const spacecraftAmplitude = 15; // Amplitude for left-right movement
+
+        function moveSpacecraft() {
+            spacecraftY += spacecraftSpeedY; // Move spacecraft downwards
+            spacecraftDirection += 0.05; // Increase direction for oscillation
+
+            // Calculate left-right oscillation and slight leftward movement
+            const oscillation = Math.sin(spacecraftDirection) * spacecraftAmplitude;
+
+            spacecraft.style.left = (spacecraftX + oscillation - 20) + 'px'; // Move slightly left
+            spacecraft.style.top = spacecraftY + 'px';
+
+            if (spacecraftY > canvas.height - 100 || spacecraftY < 0) {
+                spacecraftSpeedY *= -1; // Reverse vertical direction
+            }
+
+            requestAnimationFrame(moveSpacecraft);
+        }
+        moveSpacecraft();
+
+
+// Add event listener for the spacecraft click
+spacecraft.addEventListener('click', function() {
+    window.location.href = 'SpaceIn.html'; // Navigate to the new HTML file
+
+  
+});
+
+
+</script>
+
+
+
+</body>
+</html>
